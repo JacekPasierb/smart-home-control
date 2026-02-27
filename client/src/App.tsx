@@ -1,5 +1,8 @@
 import {useEffect, useState} from "react";
 import {io} from "socket.io-client";
+import {SensorCard} from "./components/SensorCard";
+import {SecurityCard} from "./components/SecurityCard";
+import { AlertsFeed } from "./components/AlertsFeed";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 const WS_URL = (import.meta.env.VITE_WS_URL as string) || API_URL;
@@ -83,79 +86,20 @@ export default function App() {
 
       <div style={{display: "grid", gap: 12}}>
         {Object.entries(home.sensors).map(([key, sensor]) => (
-          <div
-            key={key}
-            style={{
-              border: "1px solid #ddd",
-              padding: 12,
-              borderRadius: 8,
-            }}
-          >
-            <strong>{sensor.name}</strong>
-            <div>
-              {sensor.value} {sensor.unit}
-            </div>
-            <div>{sensor.online ? "🟢 online" : "🔴 offline"}</div>
-          </div>
+          <SensorCard key={key} sensor={sensor} />
         ))}
       </div>
 
       <h2 style={{marginTop: 32}}>Security</h2>
 
-      <div style={{border: "1px solid #ddd", padding: 12, borderRadius: 8}}>
-        <div>
-          <strong>{home.security.door_main.name}</strong>
-        </div>
-        <div>
-          {home.security.door_main.state === "open" ? "🚪 Open" : "🔒 Closed"}
-        </div>
-      </div>
-
-      <div
-        style={{
-          marginTop: 12,
-          border: "1px solid #ddd",
-          padding: 12,
-          borderRadius: 8,
-        }}
-      >
-        <strong>Alarm</strong>
-        <div>{home.security.alarm.armed ? "🛡 Armed" : "🛑 Disarmed"}</div>
-        {home.security.alarm.triggered && (
-          <div style={{color: "red"}}>🚨 ALERT TRIGGERED</div>
-        )}
-      </div>
+      <SecurityCard
+        door={home.security.door_main}
+        alarm={home.security.alarm}
+      />
 
       <h2 style={{marginTop: 32}}>Alerts</h2>
 
-      <div style={{display: "grid", gap: 8}}>
-        {alerts.length === 0 ? (
-          <div style={{opacity: 0.7}}>Brak alertów ✅</div>
-        ) : (
-          alerts.map((a) => (
-            <div
-              key={a.id}
-              style={{
-                border: "1px solid #ddd",
-                padding: 10,
-                borderRadius: 8,
-              }}
-            >
-              <div style={{fontWeight: 600}}>
-                {a.severity === "critical"
-                  ? "🚨"
-                  : a.severity === "warning"
-                  ? "⚠️"
-                  : "ℹ️"}{" "}
-                {a.message}
-              </div>
-              <div style={{fontSize: 12, opacity: 0.7}}>
-                {new Date(a.createdAt).toLocaleTimeString()}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      <AlertsFeed alerts={alerts} />
     </div>
   );
 }
