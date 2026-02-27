@@ -35,8 +35,17 @@ interface HomeState {
   alerts: any[];
 }
 
+type Alert = {
+  id: string;
+  type: "TEMP_FRIDGE_HIGH" | "DOOR_OPEN_TOO_LONG";
+  message: string;
+  severity: "info" | "warning" | "critical";
+  createdAt: number;
+};
+
 export default function App() {
   const [home, setHome] = useState<HomeState | null>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/home/123/state`)
@@ -52,6 +61,11 @@ export default function App() {
 
     socket.on("home:update", (data: HomeState) => {
       setHome(data);
+      setAlerts(data.alerts ?? []);
+    });
+
+    socket.on("alert:new", (alert: Alert) => {
+      setAlerts((prev) => [alert, ...prev].slice(0, 20));
     });
 
     return () => {
@@ -109,6 +123,37 @@ export default function App() {
         <div>{home.security.alarm.armed ? "🛡 Armed" : "🛑 Disarmed"}</div>
         {home.security.alarm.triggered && (
           <div style={{color: "red"}}>🚨 ALERT TRIGGERED</div>
+        )}
+      </div>
+
+      <h2 style={{marginTop: 32}}>Alerts</h2>
+
+      <div style={{display: "grid", gap: 8}}>
+        {alerts.length === 0 ? (
+          <div style={{opacity: 0.7}}>Brak alertów ✅</div>
+        ) : (
+          alerts.map((a) => (
+            <div
+              key={a.id}
+              style={{
+                border: "1px solid #ddd",
+                padding: 10,
+                borderRadius: 8,
+              }}
+            >
+              <div style={{fontWeight: 600}}>
+                {a.severity === "critical"
+                  ? "🚨"
+                  : a.severity === "warning"
+                  ? "⚠️"
+                  : "ℹ️"}{" "}
+                {a.message}
+              </div>
+              <div style={{fontSize: 12, opacity: 0.7}}>
+                {new Date(a.createdAt).toLocaleTimeString()}
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

@@ -26,7 +26,15 @@ export type HomeState = {
     door_main: Door;
     alarm: Alarm;
   };
-  alerts: any[];
+  alerts: Alert[];
+};
+
+export type Alert = {
+  id: string;
+  type: "TEMP_FRIDGE_HIGH" | "DOOR_OPEN_TOO_LONG";
+  message: string;
+  severity: "info" | "warning" | "critical";
+  createdAt: number;
 };
 
 const now = () => Date.now();
@@ -92,16 +100,29 @@ function rand(min: number, max: number) {
   return min + Math.random() * (max - min);
 }
 
+function uid() {
+  return Math.random().toString(16).slice(2) + Date.now().toString(16);
+}
+
+function pushAlert(alert: Alert) {
+  homeState.alerts.unshift(alert);
+  homeState.alerts = homeState.alerts.slice(0, 20); // trzymamy max 20
+}
+
 function updated(onUpdate?: (homeId: string) => void) {
   homeState.updatedAt = now();
   onUpdate?.(homeState.homeId);
 }
+let doorOpenedAt: number | null = null;
 
-export function startSimulator(onUpdate?: (homeId: string) => void) {
+export function startSimulator(
+  onUpdate?: (homeId: string) => void,
+  onAlert?: (homeId: string, alert: Alert) => void
+) {
   setInterval(() => {
     const t = homeState.sensors;
 
-    t.temp_fridge.value = Number(rand(2, 8).toFixed(1));
+    t.temp_fridge.value = Number(rand(2, 10).toFixed(1));
     t.temp_fridge.lastSeen = now();
 
     t.temp_balcony.value = Number(rand(-10, 10).toFixed(1));
@@ -117,6 +138,46 @@ export function startSimulator(onUpdate?: (homeId: string) => void) {
     t.power_total.lastSeen = now();
 
     updated(onUpdate);
+
+    // ALERT: lodówka za ciepła
+    if (homeState.sensors.temp_fridge.value > 8) {
+      const alert: Alert = {
+        id: uid(),
+        type: "TEMP_FRIDGE_HIGH",
+        message: `Lodówka za ciepła: ${homeState.sensors.temp_fridge.value}°C`,
+        severity: "warning",
+        createdAt: now(),
+      };
+
+      pushAlert(alert);
+        onAlert?.(homeState.homeId, alert);
+        
+        setInterval(() => {
+          const door = homeState.security.door_main;
+
+          if (door.state === "open" && doorOpenedAt) {
+            const secondsOpen = (now() - doorOpenedAt) / 1000;
+
+            if (secondsOpen > 10) {
+              const alert: Alert = {
+                id: uid(),
+                type: "DOOR_OPEN_TOO_LONG",
+                message: `Drzwi otwarte zbyt długo: ${Math.floor(
+                  secondsOpen
+                )}s`,
+                severity: "critical",
+                createdAt: now(),
+              };
+
+              pushAlert(alert);
+              onAlert?.(homeState.homeId, alert);
+
+              // żeby nie spamować co sekundę:
+              doorOpenedAt = now(); // reset licznika po wygenerowaniu alertu
+            }
+          }
+        }, 1000);
+    }
   }, 3000);
 
   // drzwi czasem się otwierają/zamykają
@@ -125,7 +186,12 @@ export function startSimulator(onUpdate?: (homeId: string) => void) {
     if (Math.random() < 0.3) {
       door.state = door.state === "open" ? "closed" : "open";
       door.lastSeen = now();
-      updated(onUpdate);
+        updated(onUpdate);
+        if (door.state === "open") {
+          doorOpenedAt = now();
+        } else {
+          doorOpenedAt = null;
+        }
     }
   }, 5000);
 

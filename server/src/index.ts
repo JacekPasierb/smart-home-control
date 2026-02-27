@@ -20,9 +20,14 @@ io.on("connection", (socket) => {
   });
 });
 
-startSimulator((homeId) => {
-  io.to(`home:${homeId}`).emit("home:update", getHomeState(homeId));
-});
+startSimulator(
+  (homeId) => {
+    io.to(`home:${homeId}`).emit("home:update", getHomeState(homeId));
+  },
+  (homeId, alert) => {
+    io.to(`home:${homeId}`).emit("alert:new", alert);
+  }
+);
 
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
