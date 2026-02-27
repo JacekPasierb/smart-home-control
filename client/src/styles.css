@@ -1,0 +1,165 @@
+:root {
+  --bg: #0b0f17;
+  --panel: rgba(255, 255, 255, 0.06);
+  --panel-border: rgba(255, 255, 255, 0.12);
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.6);
+
+  --critical: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --success: #10b981;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 800px at 20% 10%, rgba(99, 102, 241, 0.15), transparent 60%),
+    radial-gradient(1000px 700px at 80% 30%, rgba(16, 185, 129, 0.12), transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 28px;
+}
+
+.h1 {
+  font-size: 30px;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 18px;
+  padding: 18px;
+  backdrop-filter: blur(12px);
+}
+
+.panelTitle {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 14px;
+  color: var(--muted);
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 600px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 14px;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ========================= */
+/* Alerts styling */
+/* ========================= */
+
+.alert-critical {
+  border-left: 4px solid var(--critical);
+}
+
+.alert-warning {
+  border-left: 4px solid var(--warning);
+}
+
+.alert-info {
+  border-left: 4px solid var(--info);
+}
+
+/* ========================= */
+/* Alarm banner */
+/* ========================= */
+
+.alarm-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: var(--critical);
+  padding: 14px 18px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  animation: pulse 1.2s infinite alternate;
+}
+
+@keyframes pulse {
+  from {
+    box-shadow: 0 0 0px rgba(239, 68, 68, 0.4);
+  }
+  to {
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.6);
+  }
+}
+
+/* ========================= */
+/* Fade animation */
+/* ========================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

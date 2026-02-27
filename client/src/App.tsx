@@ -52,27 +52,41 @@ export default function App() {
     return <div style={{padding: 24}}>Error loading data</div>;
 
   return (
-    <div style={{padding: 24, fontFamily: "system-ui"}}>
-      <h1>SmartHome Control Center</h1>
-
-      <h2 style={{marginTop: 24}}>Sensors</h2>
-
-      <div style={{display: "grid", gap: 12}}>
-        {Object.entries(home.sensors).map(([key, sensor]) => (
-          <SensorCard key={key} sensor={sensor} />
-        ))}
+    <div className="container">
+      <div className="header">
+        <div>
+          <h1 className="h1">SmartHome Control Center</h1>
+          <p className="sub">
+            Realtime IoT Dashboard • WebSocket + React Query
+          </p>
+        </div>
       </div>
 
-      <h2 style={{marginTop: 32}}>Security</h2>
+      <div className="grid">
+        <div className="panel">
+          <h2 className="panelTitle">Sensors</h2>
+          <div className="cardsGrid">
+            {Object.entries(home.sensors).map(([key, sensor]) => (
+              <SensorCard key={key} sensor={sensor} />
+            ))}
+          </div>
+        </div>
 
-      <SecurityCard
-        door={home.security.door_main}
-        alarm={home.security.alarm}
-      />
+        <div style={{display: "grid", gap: 16}}>
+          <div className="panel">
+            <h2 className="panelTitle">Security</h2>
+            <SecurityCard
+              door={home.security.door_main}
+              alarm={home.security.alarm}
+            />
+          </div>
 
-      <h2 style={{marginTop: 32}}>Alerts</h2>
-
-      <AlertsFeed alerts={home.alerts} />
+          <div className="panel">
+            <h2 className="panelTitle">Alerts</h2>
+            <AlertsFeed alerts={home.alerts} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

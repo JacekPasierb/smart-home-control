@@ -13,7 +13,7 @@ type Alarm = {
 export function SecurityCard({door, alarm}: {door: Door; alarm: Alarm}) {
   return (
     <div style={{display: "grid", gap: 12}}>
-      <div style={{border: "1px solid #ddd", padding: 12, borderRadius: 8}}>
+      <div className="card">
         <div
           style={{display: "flex", justifyContent: "space-between", gap: 12}}
         >
@@ -30,7 +30,7 @@ export function SecurityCard({door, alarm}: {door: Door; alarm: Alarm}) {
         </div>
       </div>
 
-      <div style={{border: "1px solid #ddd", padding: 12, borderRadius: 8}}>
+      <div className="card">
         <div
           style={{display: "flex", justifyContent: "space-between", gap: 12}}
         >
