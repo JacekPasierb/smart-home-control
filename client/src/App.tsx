@@ -32,7 +32,7 @@ interface HomeState {
     door_main: Door;
     alarm: Alarm;
   };
-  alerts: any[];
+  alerts: Alert[];
 }
 
 type Alert = {
