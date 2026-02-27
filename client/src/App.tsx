@@ -2,47 +2,98 @@ import {useEffect, useState} from "react";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 
+interface Sensor {
+  name: string;
+  value: number;
+  unit: string;
+  online: boolean;
+  lastSeen: number;
+}
+
+interface Door {
+  name: string;
+  state: "open" | "closed";
+  online: boolean;
+  lastSeen: number;
+}
+
+interface Alarm {
+  armed: boolean;
+  triggered: boolean;
+}
+
+interface HomeState {
+  homeId: string;
+  updatedAt: number;
+  sensors: Record<string, Sensor>;
+  security: {
+    door_main: Door;
+    alarm: Alarm;
+  };
+  alerts: any[];
+}
+
 export default function App() {
-  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
-  const [message, setMessage] = useState<string>("");
+  const [home, setHome] = useState<HomeState | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/health`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setMessage(JSON.stringify(data));
-        setStatus("ok");
-      })
-      .catch((err) => {
-        setStatus("error");
-        setMessage(err.message || "error");
-      });
+    fetch(`${API_URL}/api/home/123/state`)
+      .then((res) => res.json())
+      .then((data) => setHome(data))
+      .catch(console.error);
   }, []);
+
+  if (!home) return <div style={{padding: 24}}>Loading...</div>;
 
   return (
     <div style={{padding: 24, fontFamily: "system-ui"}}>
-      <h1 style={{marginBottom: 8}}>SmartHome Control Center</h1>
+      <h1>SmartHome Control Center</h1>
+
+      <h2 style={{marginTop: 24}}>Sensors</h2>
+
+      <div style={{display: "grid", gap: 12}}>
+        {Object.entries(home.sensors).map(([key, sensor]) => (
+          <div
+            key={key}
+            style={{
+              border: "1px solid #ddd",
+              padding: 12,
+              borderRadius: 8,
+            }}
+          >
+            <strong>{sensor.name}</strong>
+            <div>
+              {sensor.value} {sensor.unit}
+            </div>
+            <div>{sensor.online ? "🟢 online" : "🔴 offline"}</div>
+          </div>
+        ))}
+      </div>
+
+      <h2 style={{marginTop: 32}}>Security</h2>
+
+      <div style={{border: "1px solid #ddd", padding: 12, borderRadius: 8}}>
+        <div>
+          <strong>{home.security.door_main.name}</strong>
+        </div>
+        <div>
+          {home.security.door_main.state === "open" ? "🚪 Open" : "🔒 Closed"}
+        </div>
+      </div>
 
       <div
         style={{
-          marginTop: 16,
+          marginTop: 12,
           border: "1px solid #ddd",
-          borderRadius: 10,
           padding: 12,
-          maxWidth: 520,
+          borderRadius: 8,
         }}
       >
-        <h2 style={{margin: 0, marginBottom: 8}}>Backend health</h2>
-        <p style={{margin: 0}}>
-          Status:{" "}
-          {status === "loading"
-            ? "⏳ loading"
-            : status === "ok"
-            ? "✅ ok"
-            : "❌ error"}
-        </p>
-        <pre style={{marginTop: 10, whiteSpace: "pre-wrap"}}>{message}</pre>
+        <strong>Alarm</strong>
+        <div>{home.security.alarm.armed ? "🛡 Armed" : "🛑 Disarmed"}</div>
+        {home.security.alarm.triggered && (
+          <div style={{color: "red"}}>🚨 ALERT TRIGGERED</div>
+        )}
       </div>
     </div>
   );
