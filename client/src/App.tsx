@@ -1,6 +1,8 @@
 import {useEffect, useState} from "react";
+import {io} from "socket.io-client";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
+const WS_URL = (import.meta.env.VITE_WS_URL as string) || API_URL;
 
 interface Sensor {
   name: string;
@@ -41,6 +43,20 @@ export default function App() {
       .then((res) => res.json())
       .then((data) => setHome(data))
       .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    const socket = io(WS_URL);
+
+    socket.emit("subscribe:home", "123");
+
+    socket.on("home:update", (data: HomeState) => {
+      setHome(data);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   if (!home) return <div style={{padding: 24}}>Loading...</div>;

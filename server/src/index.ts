@@ -1,10 +1,29 @@
+import http from "http";
 import app from "./app";
-import { startSimulator } from "./store/homeStore";
+import {startSimulator, getHomeState} from "./store/homeStore";
+import {Server} from "socket.io";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 
-startSimulator();
+const httpServer = http.createServer(app);
 
-app.listen(PORT, () => {
+const io = new Server(httpServer, {
+  cors: {origin: "http://localhost:5173"},
+});
+
+io.on("connection", (socket) => {
+  socket.on("subscribe:home", (homeId: string) => {
+    socket.join(`home:${homeId}`);
+
+    // opcjonalnie: wyślij snapshot zaraz po subskrypcji
+    socket.emit("home:update", getHomeState(homeId));
+  });
+});
+
+startSimulator((homeId) => {
+  io.to(`home:${homeId}`).emit("home:update", getHomeState(homeId));
+});
+
+httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
