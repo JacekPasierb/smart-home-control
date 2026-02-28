@@ -30,8 +30,12 @@ export default function App() {
     {id: "123", label: "Home A (123)"},
     {id: "456", label: "Home B (456)"},
   ] as const;
-  
   const [homeId, setHomeId] = useState<(typeof homes)[number]["id"]>("123");
+  const currentHomeIdRef = useRef(homeId);
+
+  useEffect(() => {
+    currentHomeIdRef.current = homeId;
+  }, [homeId]);
 
   const queryClient = useQueryClient();
   const {
@@ -114,14 +118,17 @@ export default function App() {
     socketRef.current = socket;
 
     const onConnect = () => {
-  setWsStatus("online");
-  socket.emit("subscribe:home", homeId);
-};
+      setWsStatus("online");
+      socket.emit("subscribe:home", currentHomeIdRef.current);
+    };
     const onDisconnect = () => setWsStatus("offline");
     const onConnectError = () => setWsStatus("offline");
 
     const onHomeUpdate = (data: HomeState) => {
-      queryClient.setQueryData<HomeState>(["homeState", data.homeId], data);
+      queryClient.setQueryData<HomeState>(
+        ["homeState", currentHomeIdRef.current],
+        data
+      );
     };
 
     const onAlert = (alert: Alert) => {
