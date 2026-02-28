@@ -7,6 +7,8 @@ import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {fetchHomeState} from "./api/homeApi";
 import type {Alert, HomeState} from "./types";
 import { LiveChart } from "./components/LiveChart";
+import {useMutation} from "@tanstack/react-query";
+import { setAlarm } from "./api/homeApi";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 const WS_URL = (import.meta.env.VITE_WS_URL as string) || API_URL;
@@ -25,6 +27,43 @@ export default function App() {
   } = useQuery<HomeState>({
     queryKey: ["homeState", homeId],
     queryFn: () => fetchHomeState(homeId),
+  });
+
+  const alarmMutation = useMutation({
+    mutationFn: (armed: boolean) => setAlarm(homeId, armed),
+
+    // optimistic update
+    onMutate: async (armed) => {
+      await queryClient.cancelQueries({queryKey: ["homeState", homeId]});
+
+      const prev = queryClient.getQueryData<HomeState>(["homeState", homeId]);
+
+      if (prev) {
+        queryClient.setQueryData<HomeState>(["homeState", homeId], {
+          ...prev,
+          security: {
+            ...prev.security,
+            alarm: {
+              ...prev.security.alarm,
+              armed,
+              triggered: armed ? prev.security.alarm.triggered : false,
+            },
+          },
+        });
+      }
+
+      return {prev};
+    },
+
+    onError: (_err, _armed, ctx) => {
+      if (ctx?.prev) {
+        queryClient.setQueryData<HomeState>(["homeState", homeId], ctx.prev);
+      }
+    },
+
+    onSuccess: (data) => {
+      queryClient.setQueryData<HomeState>(["homeState", homeId], data);
+    },
   });
 
   useEffect(() => {
@@ -121,6 +160,44 @@ export default function App() {
           </div>
           <div className="panel">
             <h2 className="panelTitle">Security</h2>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                marginBottom: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                className="btn"
+                onClick={() => alarmMutation.mutate(true)}
+                disabled={alarmMutation.isPending || home.security.alarm.armed}
+                title={
+                  home.security.alarm.armed
+                    ? "Alarm already armed"
+                    : "Arm alarm"
+                }
+              >
+                🛡 Arm
+              </button>
+
+              <button
+                className="btn"
+                onClick={() => alarmMutation.mutate(false)}
+                disabled={alarmMutation.isPending || !home.security.alarm.armed}
+                title={
+                  !home.security.alarm.armed
+                    ? "Alarm already disarmed"
+                    : "Disarm alarm"
+                }
+              >
+                🛑 Disarm
+              </button>
+
+              {alarmMutation.isPending && (
+                <span className="muted">Saving...</span>
+              )}
+            </div>
             <SecurityCard
               door={home.security.door_main}
               alarm={home.security.alarm}
