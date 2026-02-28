@@ -25,7 +25,7 @@ startSimulator(
     io.to(`home:${homeId}`).emit("home:update", getHomeState(homeId));
   },
   (homeId, alert) => {
-    io.to(`home:${homeId}`).emit("alert:new", alert);
+    io.to(`home:${homeId}`).emit("alert:new", {homeId, alert});
   }
 );
 

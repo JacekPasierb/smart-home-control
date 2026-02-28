@@ -131,13 +131,17 @@ export default function App() {
       );
     };
 
-    const onAlert = (alert: Alert) => {
-      // alert nie ma homeId, więc zostawiamy go w home cache przez "obecny homeId"
-      // (docelowo dodamy homeId do alertów w backendzie)
-      queryClient.setQueryData<HomeState>(["homeState", homeId], (prev) => {
-        if (!prev) return prev;
-        return {...prev, alerts: [alert, ...prev.alerts].slice(0, 20)};
-      });
+    const onAlert = (payload: {homeId: string; alert: Alert}) => {
+      queryClient.setQueryData<HomeState>(
+        ["homeState", payload.homeId],
+        (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            alerts: [payload.alert, ...prev.alerts].slice(0, 20),
+          };
+        }
+      );
     };
 
     socket.on("connect", onConnect);
