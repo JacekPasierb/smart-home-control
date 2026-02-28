@@ -228,3 +228,18 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 12px;
+  outline: none;
+  font-size: 13px;
+}
+
+.select option {
+  background: #0b0f17;
+  color: rgba(255, 255, 255, 0.92);
+}

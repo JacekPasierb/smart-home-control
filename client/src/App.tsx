@@ -12,7 +12,7 @@ import {setAlarm} from "./api/homeApi";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 const WS_URL = (import.meta.env.VITE_WS_URL as string) || API_URL;
-const HOME_ID = "123";
+
 export default function App() {
   const [chartSensorId, setChartSensorId] = useState<
     "temp_fridge" | "temp_balcony" | "temp_room"
@@ -25,8 +25,14 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const prevTriggeredRef = useRef<boolean>(false);
+  const socketRef = useRef<ReturnType<typeof io> | null>(null);
+  const homes = [
+    {id: "123", label: "Home A (123)"},
+    {id: "456", label: "Home B (456)"},
+  ] as const;
+  
+  const [homeId, setHomeId] = useState<(typeof homes)[number]["id"]>("123");
 
-  const homeId = HOME_ID;
   const queryClient = useQueryClient();
   const {
     data: home,
@@ -97,53 +103,70 @@ export default function App() {
     },
   });
 
- useEffect(() => {
-   const socket = io(WS_URL, {
-     transports: ["websocket"],
-     reconnection: true,
-     reconnectionAttempts: Infinity,
-     reconnectionDelay: 700,
-   });
+  useEffect(() => {
+    const socket = io(WS_URL, {
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 700,
+    });
 
-   const onConnect = () => {
-     setWsStatus("online");
-     socket.emit("subscribe:home", homeId);
-   };
+    socketRef.current = socket;
 
-   const onDisconnect = () => setWsStatus("offline");
-   const onConnectError = () => setWsStatus("offline");
+    const onConnect = () => {
+  setWsStatus("online");
+  socket.emit("subscribe:home", homeId);
+};
+    const onDisconnect = () => setWsStatus("offline");
+    const onConnectError = () => setWsStatus("offline");
 
-   const onHomeUpdate = (data: HomeState) => {
-     queryClient.setQueryData<HomeState>(["homeState", homeId], data);
-   };
+    const onHomeUpdate = (data: HomeState) => {
+      queryClient.setQueryData<HomeState>(["homeState", data.homeId], data);
+    };
 
-   const onAlert = (alert: Alert) => {
-     queryClient.setQueryData<HomeState>(["homeState", homeId], (prev) => {
-       if (!prev) return prev;
-       return {...prev, alerts: [alert, ...prev.alerts].slice(0, 20)};
-     });
-   };
+    const onAlert = (alert: Alert) => {
+      // alert nie ma homeId, więc zostawiamy go w home cache przez "obecny homeId"
+      // (docelowo dodamy homeId do alertów w backendzie)
+      queryClient.setQueryData<HomeState>(["homeState", homeId], (prev) => {
+        if (!prev) return prev;
+        return {...prev, alerts: [alert, ...prev.alerts].slice(0, 20)};
+      });
+    };
 
-   socket.on("connect", onConnect);
-   socket.on("disconnect", onDisconnect);
-   socket.on("connect_error", onConnectError);
-   socket.on("home:update", onHomeUpdate);
-   socket.on("alert:new", onAlert);
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("connect_error", onConnectError);
+    socket.on("home:update", onHomeUpdate);
+    socket.on("alert:new", onAlert);
 
-   socket.io.on("reconnect_attempt", () => {
-     setWsStatus("connecting");
-   });
+    socket.io.on("reconnect_attempt", () => setWsStatus("connecting"));
 
-   return () => {
-     socket.off("connect", onConnect);
-     socket.off("disconnect", onDisconnect);
-     socket.off("connect_error", onConnectError);
-     socket.off("home:update", onHomeUpdate);
-     socket.off("alert:new", onAlert);
-     socket.disconnect();
-   };
- }, [homeId, queryClient]);
-  
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("connect_error", onConnectError);
+      socket.off("home:update", onHomeUpdate);
+      socket.off("alert:new", onAlert);
+      socket.disconnect();
+      socketRef.current = null;
+    };
+    // UWAGA: homeId w deps nie chcemy tu, bo socket ma być tworzony raz
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient]);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    // dociągnij snapshot REST
+    queryClient.invalidateQueries({queryKey: ["homeState", homeId]});
+
+    // jeśli socket już połączony — subskrybuj aktualny home
+    if (socket.connected) {
+      socket.emit("subscribe:home", homeId);
+    }
+  }, [homeId, queryClient]);
+
   if (isLoading) return <div style={{padding: 24}}>Loading...</div>;
   if (isError || !home)
     return <div style={{padding: 24}}>Error loading data</div>;
@@ -157,6 +180,18 @@ export default function App() {
             Realtime IoT Dashboard • WebSocket + React Query
           </p>
         </div>
+        <select
+          className="select"
+          value={homeId}
+          onChange={(e) => setHomeId(e.target.value as any)}
+          title="Choose home"
+        >
+          {homes.map((h) => (
+            <option key={h.id} value={h.id}>
+              {h.label}
+            </option>
+          ))}
+        </select>
         <div className="badge">
           <span
             className={`dot ${
@@ -191,8 +226,6 @@ export default function App() {
           >
             ▶ Test
           </button>
-
-          
         </div>
       </div>
 
