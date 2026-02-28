@@ -198,10 +198,20 @@ export function startSimulator(
   // alarm czasem uzbrojenie/rozbrojenie (symulacja)
   setInterval(() => {
     const alarm = homeState.security.alarm;
-    if (Math.random() < 0.15) {
+    const door = homeState.security.door_main;
+
+    // losowo uzbroj/rozbrój
+    if (Math.random() < 0.35) {
       alarm.armed = !alarm.armed;
       if (!alarm.armed) alarm.triggered = false;
-      updated(onUpdate);
     }
+
+    // jeśli alarm uzbrojony i drzwi open -> czasem trigger
+    if (alarm.armed && door.state === "open" && Math.random() < 0.6) {
+      alarm.triggered = true;
+    }
+
+    homeState.updatedAt = now();
+    onUpdate?.(homeState.homeId);
   }, 8000);
 }

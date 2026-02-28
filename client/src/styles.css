@@ -163,3 +163,20 @@ body {
     transform: translateY(0);
   }
 }
+
+
+.btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s ease;
+}
+
+.btn:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
