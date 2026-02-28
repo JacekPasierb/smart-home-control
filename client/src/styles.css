@@ -213,3 +213,18 @@ body {
   background: rgba(245, 158, 11, 0.95);
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
 }
+
+.btn-small {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

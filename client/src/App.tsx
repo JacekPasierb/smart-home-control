@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {io} from "socket.io-client";
 import {SensorCard} from "./components/SensorCard";
 import {SecurityCard} from "./components/SecurityCard";
@@ -21,6 +21,11 @@ export default function App() {
   const [wsStatus, setWsStatus] = useState<"connecting" | "online" | "offline">(
     "connecting"
   );
+
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prevTriggeredRef = useRef<boolean>(false);
+
   const homeId = HOME_ID;
   const queryClient = useQueryClient();
   const {
@@ -31,6 +36,29 @@ export default function App() {
     queryKey: ["homeState", homeId],
     queryFn: () => fetchHomeState(homeId),
   });
+
+  useEffect(() => {
+    audioRef.current = new Audio("/alarm.wav");
+    audioRef.current.loop = false;
+    audioRef.current.volume = 0.6;
+  }, []);
+
+  useEffect(() => {
+    if (!home) return;
+
+    const triggered = home.security.alarm.triggered;
+    const wasTriggered = prevTriggeredRef.current;
+
+    // przejście false -> true
+    if (soundEnabled && !wasTriggered && triggered) {
+      audioRef.current?.play().catch(() => {
+        // autoplay policy: trzeba włączyć dźwięk kliknięciem
+        // zostawiamy cicho, bo i tak mamy przycisk "Test sound"
+      });
+    }
+
+    prevTriggeredRef.current = triggered;
+  }, [home, soundEnabled]);
 
   const alarmMutation = useMutation({
     mutationFn: (armed: boolean) => setAlarm(homeId, armed),
@@ -144,6 +172,27 @@ export default function App() {
             : wsStatus === "connecting"
             ? "Realtime: connecting..."
             : "Realtime: disconnected"}
+        </div>
+
+        <div style={{display: "flex", gap: 10, alignItems: "center"}}>
+          <button
+            className="btn-small"
+            onClick={() => setSoundEnabled((v) => !v)}
+            title="Enable sound alerts"
+          >
+            {soundEnabled ? "🔊 Sound ON" : "🔇 Sound OFF"}
+          </button>
+
+          <button
+            className="btn-small"
+            onClick={() => audioRef.current?.play()}
+            disabled={!soundEnabled}
+            title="Play test alarm sound"
+          >
+            ▶ Test
+          </button>
+
+          
         </div>
       </div>
 
