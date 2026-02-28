@@ -6,19 +6,22 @@ import {AlertsFeed} from "./components/AlertsFeed";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {fetchHomeState} from "./api/homeApi";
 import type {Alert, HomeState} from "./types";
-import { LiveChart } from "./components/LiveChart";
+import {LiveChart} from "./components/LiveChart";
 import {useMutation} from "@tanstack/react-query";
-import { setAlarm } from "./api/homeApi";
+import {setAlarm} from "./api/homeApi";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 const WS_URL = (import.meta.env.VITE_WS_URL as string) || API_URL;
-
+const HOME_ID = "123";
 export default function App() {
   const [chartSensorId, setChartSensorId] = useState<
     "temp_fridge" | "temp_balcony" | "temp_room"
-    >("temp_room");
-  
-  const homeId = "123";
+  >("temp_room");
+
+  const [wsStatus, setWsStatus] = useState<"connecting" | "online" | "offline">(
+    "connecting"
+  );
+  const homeId = HOME_ID;
   const queryClient = useQueryClient();
   const {
     data: home,
@@ -66,31 +69,53 @@ export default function App() {
     },
   });
 
-  useEffect(() => {
-    const socket = io(WS_URL);
+ useEffect(() => {
+   const socket = io(WS_URL, {
+     transports: ["websocket"],
+     reconnection: true,
+     reconnectionAttempts: Infinity,
+     reconnectionDelay: 700,
+   });
 
-    socket.emit("subscribe:home", homeId);
+   const onConnect = () => {
+     setWsStatus("online");
+     socket.emit("subscribe:home", homeId);
+   };
 
-    socket.on("home:update", (data: HomeState) => {
-      queryClient.setQueryData<HomeState>(["homeState", homeId], data);
-    });
+   const onDisconnect = () => setWsStatus("offline");
+   const onConnectError = () => setWsStatus("offline");
 
-    socket.on("alert:new", (alert: Alert) => {
-      queryClient.setQueryData<HomeState>(["homeState", homeId], (prev) => {
-        if (!prev) return prev;
+   const onHomeUpdate = (data: HomeState) => {
+     queryClient.setQueryData<HomeState>(["homeState", homeId], data);
+   };
 
-        return {
-          ...prev,
-          alerts: [alert, ...prev.alerts].slice(0, 20),
-        };
-      });
-    });
+   const onAlert = (alert: Alert) => {
+     queryClient.setQueryData<HomeState>(["homeState", homeId], (prev) => {
+       if (!prev) return prev;
+       return {...prev, alerts: [alert, ...prev.alerts].slice(0, 20)};
+     });
+   };
 
-    return () => {
-      socket.disconnect();
-    };
-  }, [homeId, queryClient]);
+   socket.on("connect", onConnect);
+   socket.on("disconnect", onDisconnect);
+   socket.on("connect_error", onConnectError);
+   socket.on("home:update", onHomeUpdate);
+   socket.on("alert:new", onAlert);
 
+   socket.io.on("reconnect_attempt", () => {
+     setWsStatus("connecting");
+   });
+
+   return () => {
+     socket.off("connect", onConnect);
+     socket.off("disconnect", onDisconnect);
+     socket.off("connect_error", onConnectError);
+     socket.off("home:update", onHomeUpdate);
+     socket.off("alert:new", onAlert);
+     socket.disconnect();
+   };
+ }, [homeId, queryClient]);
+  
   if (isLoading) return <div style={{padding: 24}}>Loading...</div>;
   if (isError || !home)
     return <div style={{padding: 24}}>Error loading data</div>;
@@ -103,6 +128,22 @@ export default function App() {
           <p className="sub">
             Realtime IoT Dashboard • WebSocket + React Query
           </p>
+        </div>
+        <div className="badge">
+          <span
+            className={`dot ${
+              wsStatus === "online"
+                ? "dot-online"
+                : wsStatus === "connecting"
+                ? "dot-connecting"
+                : "dot-offline"
+            }`}
+          />
+          {wsStatus === "online"
+            ? "Realtime: connected"
+            : wsStatus === "connecting"
+            ? "Realtime: connecting..."
+            : "Realtime: disconnected"}
         </div>
       </div>
 

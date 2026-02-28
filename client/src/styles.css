@@ -180,3 +180,36 @@ body {
   border-color: rgba(255, 255, 255, 0.22);
   transform: translateY(-1px);
 }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.dot-online {
+  background: rgba(16, 185, 129, 0.95);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.dot-offline {
+  background: rgba(239, 68, 68, 0.95);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.dot-connecting {
+  background: rgba(245, 158, 11, 0.95);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
+}
