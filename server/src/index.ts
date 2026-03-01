@@ -18,6 +18,9 @@ io.on("connection", (socket) => {
     // opcjonalnie: wyślij snapshot zaraz po subskrypcji
     socket.emit("home:update", getHomeState(homeId));
   });
+  socket.on("unsubscribe:home", (homeId: string) => {
+    socket.leave(`home:${homeId}`);
+  });
 });
 
 startSimulator(
