@@ -10,79 +10,82 @@ React + Vite
 
 TanStack Query
 
-Event-driven architecture
+🎯 Project Goal
 
-🚀 Project Goal
+SmartHome Control Center simulates a multi-home IoT monitoring system.
 
-The goal of this project is to simulate and manage a multi-home IoT monitoring system in real-time.
+The goal of this project is to demonstrate:
 
-It demonstrates:
-
-Realtime WebSocket communication
+Realtime communication using WebSockets
 
 REST + WebSocket synchronization
 
 Multi-tenant architecture (multiple homes)
 
-Alert system
+Server-side alert system
 
 Optimistic UI updates
 
-Reconnect-safe socket handling
+Manual cache synchronization with React Query
 
-Manual cache control with React Query
+This project focuses on architecture and data flow, not just UI.
 
-🏗 Architecture Overview
-1️⃣ Backend
+🏗 System Architecture
+Backend
+
 Responsibilities:
 
-Simulate sensors
+Simulate IoT sensors
 
 Manage alarm logic
 
 Generate alerts
 
-Emit realtime updates via WebSocket
+Emit realtime updates
 
-Provide REST snapshot
+Provide REST snapshot endpoint
 
-Technologies:
-
-Express
-
-Socket.io
-
-In-memory state (current version)
-
-Architecture:
-
-REST:
+REST Endpoint
 
 GET /api/home/:id/state
 
-WebSocket Events:
+Returns current snapshot of selected home.
+
+WebSocket Events
+
+Client → Server:
 
 subscribe:home
+
 unsubscribe:home
+
+Server → Client:
+
 home:update
+
 alert:new
 
-Each home is isolated in its own Socket.io room:
+Each home uses a dedicated Socket.io room:
 
 home:123
+
 home:456
-2️⃣ Frontend
+
+This prevents cross-home data mixing.
+
+Frontend
+
 Responsibilities:
 
-Fetch snapshot via REST
+Fetch initial state via REST
 
-Subscribe to realtime updates
+Subscribe to WebSocket room
 
-Synchronize cache with WebSocket events
+Synchronize data using React Query cache
 
-Display sensors, charts and alerts
+Display sensors, alerts, and live charts
 
-Handle alarm control with optimistic update
+Handle alarm control (optimistic updates)
 
 Technologies:
 
@@ -90,39 +93,37 @@ React
 
 TanStack Query
 
-Socket.io-client
+Socket.io client
 
 Vite
 
 🔄 Data Flow
 
-Client fetches initial state via REST
+Client fetches initial snapshot via REST.
 
-Client subscribes to WebSocket room
+Client subscribes to WebSocket room.
 
-Backend emits:
+Backend emits updates (home:update, alert:new).
 
-home:update
+Frontend updates React Query cache using setQueryData.
 
-alert:new
+UI re-renders automatically.
 
-Frontend updates React Query cache via setQueryData
-
-UI re-renders automatically
+No polling is used.
 
 ⚡ Realtime Strategy
 
 We use:
 
-REST for initial snapshot
+REST for initial data
 
 WebSocket for incremental updates
 
 React Query as single source of truth
 
-Manual cache updates instead of refetch
+Manual cache updates instead of refetching
 
-This prevents polling and ensures efficient updates.
+This ensures efficient, event-driven updates.
 
 🔔 Alert System
 
@@ -134,61 +135,43 @@ Door open duration
 
 Alarm trigger logic
 
-Each home maintains its own alert list (max 20 stored).
+Each home stores a maximum of 20 alerts.
 
-🧠 Design Decisions
+✅ Implemented Features
 
-Why React Query instead of Redux?
+Multi-home support
 
-Better async handling
+Realtime sensor updates
 
-Built-in caching
+Alarm arm/disarm
 
-Easier manual cache control
+Optimistic updates
 
-Why WebSocket rooms?
+Alert feed
 
-Multi-tenant isolation
+Sound alarm notification
 
-Prevent cross-home data mixing
+Live chart visualization
 
-Why optimistic updates?
+Reconnect-safe WebSocket handling
 
-Better UX for alarm toggle
+Room-based subscription system
 
-Immediate feedback without waiting for server
+🔮 Planned Improvements
 
-🧪 Current Features
+Authentication (JWT)
 
-✔ Multi-home support
-✔ Real-time sensor updates
-✔ Alarm arm/disarm
-✔ Optimistic update
-✔ Alert system
-✔ Sound alarm
-✔ Live chart
-✔ Reconnect-safe socket
-✔ Room unsubscribe on home change
+Database persistence (MongoDB / PostgreSQL)
 
-🔮 Future Improvements
+Historical data storage
 
-Planned:
+Docker setup
 
-🔐 Authentication (JWT)
+VPS deployment
 
-🗄 Database persistence (Mongo/Postgres)
+WebSocket authentication handshake
 
-📊 Historical data storage
-
-📈 Real historical charts
-
-🐳 Dockerization
-
-☁ Deployment to VPS
-
-🔐 WebSocket authentication handshake
-
-🧑‍💼 Admin panel
+Admin panel
 
 🛠 Local Setup
 Backend
@@ -201,20 +184,28 @@ npm install
 npm run dev
 🌐 Environment Variables
 
-Frontend .env:
+Frontend .env
 
 VITE_API_URL=http://localhost:4000
 VITE_WS_URL=http://localhost:4000
 
-Backend:
+Backend
 
 PORT=4000
-🧑‍💻 Author
+🧠 Design Philosophy
 
-Designed as a demonstration of:
+This project was built to demonstrate:
 
-Realtime architecture
+Event-driven architecture
 
-Event-driven design
+Proper separation of REST and realtime layers
 
-Modern frontend data synchronization
+Cache synchronization strategy
+
+Multi-tenant room isolation
+
+Production-oriented thinking
+
+📌 Author
+
+Designed as a demonstration of realtime system architecture using modern web technologies.
