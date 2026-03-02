@@ -10,14 +10,14 @@ const USERS = [
   {
     id: "u1",
     login: "user",
-    passHash: "$2a$10$...", // wklej hash bcrypt
+    passHash: "$2b$10$VkVudAAXfwhjfoH4W4.daO4/HQUDqwLsUc6wS6YYw/qhsFAhCftwq", // wklej hash bcrypt
     role: "user",
     homes: ["123"],
   },
   {
     id: "a1",
     login: "admin",
-    passHash: "$2a$10$...",
+    passHash: "$2b$10$VbNY3iPxuu5vs51J1O4AZOuECkiCy/kKk60oDxtaSyEt9hPUcGVlu",
     role: "admin",
     homes: ["123", "456"],
   },
