@@ -1,10 +1,11 @@
 import {Request, Response, NextFunction} from "express";
 import jwt from "jsonwebtoken";
+import type { Role } from "./homeAccess";
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
-    role: string;
+    role: Role;
   };
 }
 
@@ -23,7 +24,7 @@ export const authRequired = (
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET as string) as {
       sub: string;
-      role: string;
+      role: Role;
     };
 
     req.user = {

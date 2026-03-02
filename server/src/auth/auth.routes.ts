@@ -1,6 +1,7 @@
 import {Router} from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import type { Role } from "./homeAccess";
 
 const router = Router();
 
@@ -32,7 +33,7 @@ router.post("/login", async (req, res) => {
   if (!ok) return res.status(401).json({message: "Invalid credentials"});
 
   const accessToken = jwt.sign(
-    {sub: user.id, role: user.role},
+    {sub: user.id, role: user.role as Role},
     process.env.JWT_SECRET as string,
     {expiresIn: "2h"}
   );
