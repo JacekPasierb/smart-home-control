@@ -8,7 +8,7 @@ export type AuthedUser = {
 // MVP: ownership w pamięci (ETAP 3 -> DB)
 const HOME_OWNERS: Record<string, string[]> = {
   "123": ["u1"],
-  "456": ["a1"],
+  "456": ["a1", "u1"],
 };
 
 export function canAccessHome(user: AuthedUser, homeId: string) {

@@ -25,12 +25,16 @@ const USERS = [
 
 router.post("/login", async (req, res) => {
   const {login, password} = req.body;
+console.log("login", login);
 
   const user = USERS.find((u) => u.login === login);
+  console.log("user", user);
+  
   if (!user) return res.status(401).json({message: "Invalid credentials"});
 
   const ok = await bcrypt.compare(password, user.passHash);
   if (!ok) return res.status(401).json({message: "Invalid credentials"});
+
 
   const accessToken = jwt.sign(
     {sub: user.id, role: user.role as Role},

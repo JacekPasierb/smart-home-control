@@ -12,23 +12,56 @@ import {SensorCard} from "./components/SensorCard";
 import {SecurityCard} from "./components/SecurityCard";
 import {AlertsFeed} from "./components/AlertsFeed";
 import {LiveChart} from "./components/LiveChart";
+import {LoginPage} from "./components/LoginPage";
 
 type ChartSensorId = "temp_fridge" | "temp_balcony" | "temp_room";
 
 export default function App() {
+  const token = localStorage.getItem("accessToken");
+  const isAuthed = Boolean(token);
+
+  // hooki zawsze wywołane
   const [homeId, setHomeId] = useState<HomeId>("123");
   const [chartSensorId, setChartSensorId] =
     useState<ChartSensorId>("temp_room");
 
-  const {data: home, isLoading, isError} = useHomeState(homeId);
-  const {wsStatus} = useHomeSocket(homeId);
-  const alarmMutation = useAlarmMutation(homeId);
+  // hooki dostają enabled -> nie robią requestów/socketa bez tokenu
+  const {
+    data: home,
+    isLoading,
+    isError,
+    error,
+  } = useHomeState(homeId, isAuthed);
+  const {wsStatus} = useHomeSocket(homeId, isAuthed);
+  const alarmMutation = useAlarmMutation(homeId, isAuthed);
   const {soundEnabled, setSoundEnabled, testPlay} = useAlarmSound(home);
 
-  if (isLoading) return <div style={{padding: 24}}>Loading...</div>;
-  if (isError || !home)
-    return <div style={{padding: 24}}>Error loading data</div>;
+  // ✅ najpierw auth gate
+  if (!isAuthed) return <LoginPage />;
 
+  // ✅ potem stany query
+  if (isLoading) return <div style={{padding: 24}}>Loading...</div>;
+
+  if (isError) {
+    const msg = (error as Error)?.message;
+    return (
+      <div style={{padding: 24}}>
+        {msg === "Forbidden"
+          ? "⛔ Forbidden: no access to this home"
+          : "Error loading data"}
+      </div>
+    );
+  }
+
+  if (!home) return <div style={{padding: 24}}>Loading...</div>;
+
+
+  const userRaw = localStorage.getItem("user");
+  const user = userRaw ? (JSON.parse(userRaw) as {homes: string[]}) : null;
+
+  const visibleHomes = user?.homes?.length
+    ? HOMES.filter((h) => user.homes.includes(h.id))
+    : HOMES;
   return (
     <div className="container">
       <div className="header">
@@ -38,6 +71,17 @@ export default function App() {
             Realtime IoT Dashboard • WebSocket + React Query
           </p>
         </div>
+
+        <button
+          className="btn-small"
+          onClick={() => {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("user");
+            window.location.reload();
+          }}
+        >
+          Logout
+        </button>
 
         <div
           style={{
@@ -53,7 +97,7 @@ export default function App() {
             onChange={(e) => setHomeId(e.target.value as HomeId)}
             title="Choose home"
           >
-            {HOMES.map((h) => (
+            {visibleHomes.map((h) => (
               <option key={h.id} value={h.id}>
                 {h.label}
               </option>
